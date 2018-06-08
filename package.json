@@ -7,7 +7,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "bip-ed25519": "git+https://github.com/ilap/bip32-ed25519.git",
     "bip39": "^2.5.0",
     "blakejs": "^1.1.0",
     "borc": "^2.0.3",

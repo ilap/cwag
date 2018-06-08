@@ -18,6 +18,8 @@ const ed25519 = require('bip-ed25519')
 msg("#### Step 1-2", "The 12 words to a 132 bit Mnemonic(16+4bit) to a 128 bit Entropy(16)")
 
 var mnemonics = 'ring crime symptom enough erupt lady behave ramp apart settle citizen junk'
+//mnemonics = 'drill bean maid jealous thrive figure accuse girl used canal able sweet'
+//mnemonics = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 msg("Mnemonic", mnemonics)
 
 var entropy = bip39.mnemonicToEntropy(mnemonics)
@@ -28,7 +30,7 @@ msg("Serialised", cborEnt.toString("hex")) // serialise w/ CBOR
 
 // 3. Generate Seed(32), simply means Blake2b_256 the CBORED entropy
 console.log()
-msg("#### Step 3", "128bit entropy(16) to Blake2b_SHA256 Seed(32)")
+msg("#### Step 3a", "128bit entropy(16) to Blake2b_SHA256 Seed(32)")
 
 var seed = blake.blake2bHex(cborEnt, null, 32)
 msg("Seed(32)", seed)
@@ -36,11 +38,47 @@ msg("Seed(32)", seed)
 var cborSeed = cbor.encode(new Buffer(seed, 'hex'), 'hex') // CBOR(bytestring) the normal seed (hashed entropy)
 msg("Serialised", cborSeed.toString("hex"))
 
-console.log()
-msg("#### Step 4", "Generate a BIP-Ed25519 compatible keypair and the ChainCode from Seed")
-
 // TODO: The password protected Wallets are currently not suppoerted.
 let passPhrase = "" // Wallet/Spending password is "" in defeault.
+
+console.log()
+msg("#### Step3b", "Spending password to EncryptedPass")
+console.log("Spending pass   : ", "\"" + passPhrase + "\"")
+
+// Serialise the spending password
+passPhrase = cbor.encode(new Buffer(passPhrase), 'hex')
+console.log("Serialised      : ", passPhrase.toString("hex"))
+
+// Serialise the seed again and then hash it
+seedBuf = cbor.encode(cborSeed, 'hex')
+
+// Generate the salt which is the blake2b_256 of the serialised seed. 
+var hashedSeed = blake.blake2bHex(seedBuf, null, 32)
+salt = cbor.encode(new Buffer(hashedSeed, 'hex'), 'hex') 
+
+console.log("Generated salt  : ", salt.toString("hex"))
+
+var N = 16384, 
+    n = Math.log2(16384), // It's needed for EncryptePass' string generation
+    r = 8,
+    p = 1
+
+// PBKDF hash the spending password /w the salt
+var hashedPass = scrypt.hashSync(passPhrase, {"N":N,"r":r,"p":p}, 32, salt);
+console.log("Generated pass  : ", hashedPass.toString("hex"))
+
+//console.log("BS64 Pwd: ", hashedPass.toString('base64'))
+//console.log("BS64 Salt: ", salt.toString('base64'))
+// Build password hash similar to the Haskel's Crypto.Scrypt EncryptedPass format
+// e.g.: 14|8|1|5yBn7n5qwF+U3o0wZOm/rdzugSxdDKNIu8sSLK6vn4I=|WCAUyPBw/ZJDWN3BsEUxRPfytn5vt/1ZvqXHc/XXQ5+deg==
+var encryptedPass = n  + "|" + r + "|" + p + "|" + hashedPass.toString('base64') + "|" + salt.toString('base64')
+// serialise the encryptedPass
+var encryptedPass = cbor.encode(new Buffer(encryptedPass))
+console.log("EncryptePass    : ", encryptedPass.toString())
+console.log("Base64-ed       : ", new Buffer(encryptedPass).toString('base64'))
+
+console.log()
+msg("#### Step 4", "Generate a BIP-Ed25519 compatible keypair and the ChainCode from Seed")
 
 // 4. Use the seed(32) to generate the BIP-Ed25519 compatible keypair and
 // them construct the XPriv(128) using the folowing formula. 
