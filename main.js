@@ -15,11 +15,9 @@ const ed25519 = require('bip-ed25519')
 // It generates a valid Cardano address based from a 12-word BIP39 mnemonic.
 // 1. Generate 128 bit Entropy from known mnemonics
 // 2. Generate entropy from mnemonic, simple remove last 4 bits.
-msg("#### Step 1-2", "The 12 words to a 132 bit Mnemonic(16+4bit) to a 128 bit Entropy(16)")
+msg("#### Step 1-2", "The 12-word Menonic phrase to a 132 bit Mnemonic(16+4bit) then to a 128 bit Entropy(16)")
 
 var mnemonics = 'ring crime symptom enough erupt lady behave ramp apart settle citizen junk'
-//mnemonics = 'drill bean maid jealous thrive figure accuse girl used canal able sweet'
-//mnemonics = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 msg("Mnemonic", mnemonics)
 
 var entropy = bip39.mnemonicToEntropy(mnemonics)
@@ -30,7 +28,7 @@ msg("Serialised", cborEnt.toString("hex")) // serialise w/ CBOR
 
 // 3. Generate Seed(32), simply means Blake2b_256 the CBORED entropy
 console.log()
-msg("#### Step 3a", "128bit entropy(16) to Blake2b_SHA256 Seed(32)")
+msg("#### Step 3a", "128bit Entropy(16) to Blake2b_SHA256 Seed(32)")
 
 var seed = blake.blake2bHex(cborEnt, null, 32)
 msg("Seed(32)", seed)
@@ -67,11 +65,10 @@ var N = 16384,
 var hashedPass = scrypt.hashSync(passPhrase, {"N":N,"r":r,"p":p}, 32, salt);
 console.log("Generated pass  : ", hashedPass.toString("hex"))
 
-//console.log("BS64 Pwd: ", hashedPass.toString('base64'))
-//console.log("BS64 Salt: ", salt.toString('base64'))
 // Build password hash similar to the Haskel's Crypto.Scrypt EncryptedPass format
 // e.g.: 14|8|1|5yBn7n5qwF+U3o0wZOm/rdzugSxdDKNIu8sSLK6vn4I=|WCAUyPBw/ZJDWN3BsEUxRPfytn5vt/1ZvqXHc/XXQ5+deg==
 var encryptedPass = n  + "|" + r + "|" + p + "|" + hashedPass.toString('base64') + "|" + salt.toString('base64')
+
 // serialise the encryptedPass
 var encryptedPass = cbor.encode(new Buffer(encryptedPass))
 console.log("EncryptePass    : ", encryptedPass.toString())
@@ -112,7 +109,7 @@ if (XPriv == null) {
 // 5.
 // We generate the CwId (Cardano Wallet Id) from the XPub (PublicKey + ChainCode)
 console.log()
-msg("#### Step 5", "generate the CwId (Cardano Wallet Id) from the XPub (PublicKey + ChainCode)")
+msg("#### Step 5", "Generate the CwId (Cardano Wallet Id) from XPub (PublicKey + ChainCode)")
 
 var xpub = Buffer.concat([XPriv.XPub.PublicKey, XPriv.XPub.ChainCode])
 msg("XPub(64)", xpub.toString('hex'))
@@ -153,7 +150,7 @@ addrRoot = blake.blake2bHex(sha3, null, 28)
 
 // convert digest to Buffer
 abstractHash = new Buffer(addrRoot, 'hex')
-msg("Blade2B (28)", abstractHash.toString('hex'))
+msg("Blake2b (28)", abstractHash.toString('hex'))
 
 // b.2 Serialise the address structure.
 let address = [ 
