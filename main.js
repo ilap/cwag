@@ -38,13 +38,16 @@ msg("Serialised", cborSeed.toString("hex"))
 
 // TODO: The password protected Wallets are currently not suppoerted.
 let passPhrase = "" // Wallet/Spending password is "" in defeault.
+let passPhraseHash = blake.blake2bHex(passPhrase, null, 32)
 
 console.log()
 msg("#### Step3b", "Spending password to EncryptedPass")
 console.log("Spending pass   : ", "\"" + passPhrase + "\"")
+console.log("Spending hash   : ", passPhraseHash)
 
 // Serialise the spending password
-passPhrase = cbor.encode(new Buffer(passPhrase), 'hex')
+// passPhrase = cbor.encode(new Buffer(passPhrase), 'hex')
+passPhrase = cbor.encode(new Buffer(passPhraseHash, 'hex'), 'hex') // need to serialize password hash, instead of password
 console.log("Serialised      : ", passPhrase.toString("hex"))
 
 // Serialise the seed again and then hash it
@@ -67,7 +70,8 @@ console.log("Generated pass  : ", hashedPass.toString("hex"))
 
 // Build password hash similar to the Haskel's Crypto.Scrypt EncryptedPass format
 // e.g.: 14|8|1|5yBn7n5qwF+U3o0wZOm/rdzugSxdDKNIu8sSLK6vn4I=|WCAUyPBw/ZJDWN3BsEUxRPfytn5vt/1ZvqXHc/XXQ5+deg==
-var encryptedPass = n  + "|" + r + "|" + p + "|" + hashedPass.toString('base64') + "|" + salt.toString('base64')
+// var encryptedPass = n  + "|" + r + "|" + p + "|" + hashedPass.toString('base64') + "|" + salt.toString('base64')
+var encryptedPass = n  + "|" + r + "|" + p + "|" +  salt.toString('base64') + "|" + hashedPass.toString('base64')
 
 // serialise the encryptedPass
 var encryptedPass = cbor.encode(new Buffer(encryptedPass))
